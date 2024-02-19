@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
 #
 # NVIDIA CORPORATION and its licensors retain all intellectual property
 # and proprietary rights in and to this software, related documentation
@@ -430,7 +430,8 @@ def augment_pipeline(
         # Execute transformation.
         transforms = tf.reshape(G_inv, [-1, 9])[:, :8]
         shape = [(height + Hz_pad * 2) * 2, (width + Hz_pad * 2) * 2]
-        # images = tf.contrib.image.transform(images=images, transforms=transforms, output_shape=shape, interpolation='BILINEAR')
+        # images = import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior().image.transform(images=images, transforms=transforms, output_shape=shape, interpolation='BILINEAR')
 
         # Downsample and crop.
         images = tf.nn.depthwise_conv2d(input=images, filter=Hz[np.newaxis,:], strides=[1,1,1,1], padding='SAME', data_format='NHWC')

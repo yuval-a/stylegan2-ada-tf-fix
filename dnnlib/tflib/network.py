@@ -15,7 +15,8 @@ import uuid
 import sys
 import copy
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 from collections import OrderedDict
 from typing import Any, List, Tuple, Union, Callable
@@ -70,10 +71,12 @@ class Network:
         if module_src is None:
             module_src = inspect.getsource(module)
 
+    
         # Initialize fields.
         self._init_fields(name=(name or func_name), static_kwargs=static_kwargs, build_func=func, build_func_name=func_name, build_module_src=module_src)
 
     def _init_fields(self, name: str, static_kwargs: dict, build_func: Callable, build_func_name: str, build_module_src: str) -> None:
+        build_module_src = build_module_src.replace("import tensorflow as tf", "import tensorflow.compat.v1 as tf\ntf.disable_v2_behavior()")
         tfutil.assert_tf_initialized()
         assert isinstance(name, str)
         assert len(name) >= 1
@@ -428,8 +431,8 @@ class Network:
         name = state["name"]
         static_kwargs = state["static_kwargs"]
         build_module_src = state["build_module_src"]
+        build_module_src = build_module_src.replace("import tensorflow as tf", "import tensorflow.compat.v1 as tf\ntf.disable_v2_behavior()")
         build_func_name = state["build_func_name"]
-
         # Create temporary module from the imported source code.
         module_name = "_tflib_network_import_" + uuid.uuid4().hex
         module = types.ModuleType(module_name)

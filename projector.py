@@ -15,7 +15,8 @@ import imageio
 
 import numpy as np
 import PIL.Image
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import tqdm
 
 import dnnlib
@@ -215,7 +216,7 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
     s = min(w, h)
     target_pil = target_pil.crop(((w - s) // 2, (h - s) // 2, (w + s) // 2, (h + s) // 2))
     target_pil= target_pil.convert('RGB')
-    target_pil = target_pil.resize((Gs.output_shape[3], Gs.output_shape[2]), PIL.Image.ANTIALIAS)
+    target_pil = target_pil.resize((Gs.output_shape[3], Gs.output_shape[2]), PIL.Image.Resampling.LANCZOS)
     target_uint8 = np.array(target_pil, dtype=np.uint8)
     target_float = target_uint8.astype(np.float32).transpose([2, 0, 1]) * (2 / 255) - 1
 

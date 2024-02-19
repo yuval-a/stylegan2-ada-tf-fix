@@ -10,7 +10,8 @@
 "Training Generative Adversarial Networks with Limited Data"."""
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import dnnlib
 import dnnlib.tflib as tflib
 from dnnlib.tflib.ops.upfirdn_2d import upsample_2d, downsample_2d, upsample_conv_2d, conv_downsample_2d
@@ -37,7 +38,7 @@ def get_weight(shape, gain=1, equalized_lr=True, lrmul=1, weight_var='weight', t
 
     # Create variable.
     init = tf.initializers.random_normal(0, init_std)
-    w = tf.get_variable(weight_var, shape=shape, initializer=init, trainable=trainable) * runtime_coef
+    w = tf.Variable(weight_var, shape=shape, initializer=init, trainable=trainable) * runtime_coef
     if use_spectral_norm:
         w = apply_spectral_norm(w, state_var=weight_var+'_sn')
     return w
@@ -46,7 +47,7 @@ def get_weight(shape, gain=1, equalized_lr=True, lrmul=1, weight_var='weight', t
 # Bias and activation function.
 
 def apply_bias_act(x, act='linear', gain=None, lrmul=1, clamp=None, bias_var='bias', trainable=True):
-    b = tf.get_variable(bias_var, shape=[x.shape[1]], initializer=tf.initializers.zeros(), trainable=trainable) * lrmul
+    b = tf.Variable(bias_var, shape=[x.shape[1]], initializer=tf.initializers.zeros(), trainable=trainable) * lrmul
     return fused_bias_act(x, b=tf.cast(b, x.dtype), act=act, gain=gain, clamp=clamp)
 
 #----------------------------------------------------------------------------
@@ -168,7 +169,7 @@ def minibatch_stddev_layer(x, group_size=None, num_new_features=1):
 def apply_spectral_norm(w, state_var='sn', iterations=1, eps=1e-8):
     fmaps = w.shape[-1].value
     w_mat = tf.reshape(w, [-1, fmaps])
-    u_var = tf.get_variable(state_var, shape=[1,fmaps], initializer=tf.initializers.random_normal(), trainable=False)
+    u_var = tf.Variable(state_var, shape=[1,fmaps], initializer=tf.initializers.random_normal(), trainable=False)
 
     u = u_var
     for _ in range(iterations):
@@ -238,7 +239,7 @@ def G_main(
     dlatents = tf.cast(dlatents, tf.float32)
 
     # Update moving average of W.
-    dlatent_avg = tf.get_variable('dlatent_avg', shape=[dlatent_size], initializer=tf.initializers.zeros(), trainable=False)
+    dlatent_avg = tf.Variable('dlatent_avg', shape=[dlatent_size], initializer=tf.initializers.zeros(), trainable=False)
     if dlatent_avg_beta is not None:
         with tf.variable_scope('DlatentAvg'):
             batch_avg = tf.reduce_mean(dlatents[:, 0], axis=0)
@@ -368,6 +369,7 @@ def G_synthesis(
 
     **_kwargs,                          # Ignore unrecognized keyword args.
 ):
+    print ("CALL IT")
     resolution_log2 = int(np.log2(resolution))
     assert resolution == 2**resolution_log2 and resolution >= 4
     def nf(stage): return np.clip(int(fmap_base / (2.0 ** (stage * fmap_decay))), fmap_min, fmap_max)
@@ -385,7 +387,7 @@ def G_synthesis(
         for layer_idx in range(num_layers - 1):
             res = (layer_idx + 5) // 2
             shape = [1, 1, 2**res, 2**res]
-            noise_inputs.append(tf.get_variable(f'noise{layer_idx}', shape=shape, initializer=tf.initializers.random_normal(), trainable=False))
+            noise_inputs.append(tf.Variable(f'noise{layer_idx}', shape=shape, initializer=tf.initializers.random_normal(), trainable=False))
 
     # Single convolution layer with all the bells and whistles.
     def layer(x, layer_idx, fmaps, kernel, up=False):
@@ -395,7 +397,7 @@ def G_synthesis(
                 noise = tf.random_normal([tf.shape(x)[0], 1, x.shape[2], x.shape[3]], dtype=x.dtype)
             else:
                 noise = tf.cast(noise_inputs[layer_idx], x.dtype)
-            noise_strength = tf.get_variable('noise_strength', shape=[], initializer=tf.initializers.zeros())
+            noise_strength = tf.Variable('noise_strength', shape=[], initializer=tf.initializers.zeros())
             x += noise * tf.cast(noise_strength, x.dtype)
         return apply_bias_act(x, act=act, clamp=conv_clamp)
 
@@ -433,7 +435,7 @@ def G_synthesis(
     with tf.variable_scope('4x4'):
         with tf.variable_scope('Const'):
             fmaps = fmap_const if fmap_const is not None else nf(1)
-            x = tf.get_variable('const', shape=[1, fmaps, 4, 4], initializer=tf.initializers.random_normal())
+            x = tf.Variable('const', shape=[1, fmaps, 4, 4], initializer=tf.initializers.random_normal())
             x = tf.tile(tf.cast(x, dtype), [tf.shape(dlatents_in)[0], 1, 1, 1])
         with tf.variable_scope('Conv'):
             x = layer(x, layer_idx=0, fmaps=nf(1), kernel=3)

@@ -16,7 +16,8 @@ import threading
 import six.moves.queue as Queue
 import traceback
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import PIL.Image
 import dnnlib.tflib as tflib
 import scipy
@@ -574,8 +575,8 @@ def create_lsun(tfrecord_dir, lmdb_dir, resolution=256, max_images=None):
                         img = np.asarray(PIL.Image.open(io.BytesIO(value)))
                     crop = np.min(img.shape[:2])
                     img = img[(img.shape[0] - crop) // 2 : (img.shape[0] + crop) // 2, (img.shape[1] - crop) // 2 : (img.shape[1] + crop) // 2]
-                    img = PIL.Image.fromarray(img, 'RGB')
-                    img = img.resize((resolution, resolution), PIL.Image.ANTIALIAS)
+                    img = PIL.Image.fromarray(img, 'RGB') 
+                    img = img.resize((resolution, resolution), PIL.Image.Resampling.LANCZOS)
                     img = np.asarray(img)
                     img = img.transpose([2, 0, 1]) # HWC => CHW
                     tfr.add_image(img)
@@ -614,7 +615,7 @@ def create_lsun_wide(tfrecord_dir, lmdb_dir, width=512, height=384, max_images=N
 
                     img = img[(img.shape[0] - ch) // 2 : (img.shape[0] + ch) // 2]
                     img = PIL.Image.fromarray(img, 'RGB')
-                    img = img.resize((width, height), PIL.Image.ANTIALIAS)
+                    img = img.resize((width, height), PIL.Image.Resampling.LANCZOS)
                     img = np.asarray(img)
                     img = img.transpose([2, 0, 1]) # HWC => CHW
 
@@ -765,7 +766,7 @@ def unpack(tfrecord_dir, output_dir, resolution=None):
         else:
             img = PIL.Image.fromarray(images[0].transpose(1, 2, 0), 'RGB')
         if resolution is not None:
-            img = img.resize((resolution, resolution), PIL.Image.ANTIALIAS)
+            img = img.resize((resolution, resolution), PIL.Image.Resampling.LANCZOS)
         assert lbls.shape[0] == 1
         labels.append(lbls[0])
         png_fname = make_png_path(output_dir, idx)
