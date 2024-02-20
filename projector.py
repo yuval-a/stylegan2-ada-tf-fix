@@ -17,6 +17,7 @@ import numpy as np
 import PIL.Image
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+tf.enable_eager_execution()
 import tqdm
 
 import dnnlib
