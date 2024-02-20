@@ -147,6 +147,7 @@ class Optimizer:
         with tf.name_scope(self.id + "_grad"), tf.device(device.name), tf.control_dependencies(deps):
             loss = self.apply_loss_scaling(tf.cast(loss, tf.float32))
             with tf.GradientTape() as tape:
+                tf.enable_eager_execution()
                 # Compute loss within the tape context
                 loss = self.apply_loss_scaling(tf.cast(loss, tf.float32))
                 gradients = tape.gradient(loss, trainable_vars)
