@@ -149,7 +149,9 @@ class Optimizer:
             with tf.GradientTape() as tape:
                 # Compute loss within the tape context
                 loss = self.apply_loss_scaling(tf.cast(loss, tf.float32))
-                trainable_vars._id = "trainable_vars"
+                # Add _id attribute to each object in the list
+                for i, var in enumerate(trainable_vars):
+                    setattr(var, '_id', i)
                 gradients = tape.gradient(loss, trainable_vars)
 
         # Register gradients.
