@@ -148,10 +148,11 @@ class Optimizer:
             gate = tf.compat.v1.train.Optimizer.GATE_NONE  # disable gating to reduce memory usage (for compatibility)
             with tf.GradientTape() as tape:
                 # Compute loss within the tape context
-                grad_list = device.optimizer.compute_gradients(loss=loss, var_list=trainable_vars, gate_gradients=gate)
+                loss = self.apply_loss_scaling(tf.cast(loss, tf.float32))
+                gradients = tape.gradient(loss, trainable_vars)
 
         # Register gradients.
-        for grad, var in grad_list:
+        for grad, var in zip(gradients, trainable_vars):
             if var not in device.grad_raw:
                 device.grad_raw[var] = []
             device.grad_raw[var].append(grad)
