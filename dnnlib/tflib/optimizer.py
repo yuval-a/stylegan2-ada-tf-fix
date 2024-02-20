@@ -113,6 +113,7 @@ class Optimizer:
         return device
 
     def register_gradients(self, loss: TfExpression, trainable_vars: Union[List, dict]) -> None:
+        print (trainable_vars)
         """Register the gradients of the given loss function with respect to the given variables.
         Intended to be called once per GPU."""
         tfutil.assert_tf_initialized()
