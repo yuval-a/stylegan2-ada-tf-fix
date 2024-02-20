@@ -145,7 +145,6 @@ class Optimizer:
         # Compute gradients.
         with tf.name_scope(self.id + "_grad"), tf.device(device.name), tf.control_dependencies(deps):
             loss = self.apply_loss_scaling(tf.cast(loss, tf.float32))
-            gate = tf.compat.v1.train.Optimizer.GATE_NONE  # disable gating to reduce memory usage (for compatibility)
             with tf.GradientTape() as tape:
                 # Compute loss within the tape context
                 loss = self.apply_loss_scaling(tf.cast(loss, tf.float32))
